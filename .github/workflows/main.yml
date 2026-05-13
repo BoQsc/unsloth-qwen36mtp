@@ -1,0 +1,256 @@
+name: Qwen3.6 MTP llama.cpp Windows
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_repo:
+        description: "Qwen3.6 MTP GGUF repository"
+        required: true
+        type: choice
+        default: "unsloth/Qwen3.6-27B-MTP-GGUF"
+        options:
+          - "unsloth/Qwen3.6-27B-MTP-GGUF"
+          - "unsloth/Qwen3.6-35B-A3B-MTP-GGUF"
+
+      quant:
+        description: "GGUF quant to download"
+        required: true
+        default: "UD-Q4_K_XL"
+
+      context:
+        description: "Context size"
+        required: true
+        default: "8192"
+
+      thinking:
+        description: "Thinking mode"
+        required: true
+        type: choice
+        default: "true"
+        options:
+          - "true"
+          - "false"
+
+jobs:
+  qwen36-mtp-windows:
+    # Recommended: your own Windows NVIDIA GPU runner.
+    # Replace GPU with your runner label if different.
+    runs-on: [self-hosted, Windows, X64, GPU]
+
+    timeout-minutes: 360
+
+    defaults:
+      run:
+        shell: pwsh
+
+    env:
+      LLAMA_REPO: "https://github.com/am17an/llama.cpp.git"
+      LLAMA_BRANCH: "mtp-clean"
+
+      MODEL_REPO: ${{ inputs.model_repo }}
+      MODEL_QUANT: ${{ inputs.quant }}
+      MODEL_CONTEXT: ${{ inputs.context }}
+      THINKING_MODE: ${{ inputs.thinking }}
+
+      HF_HUB_ENABLE_HF_TRANSFER: "1"
+      SERVER_PORT: "8080"
+
+    steps:
+      - name: Show system info
+        run: |
+          Write-Host "Runner: $env:RUNNER_NAME"
+          Write-Host "Workspace: $env:GITHUB_WORKSPACE"
+
+          nvidia-smi
+          git --version
+          cmake --version
+          py -3 --version
+
+      - name: Install Hugging Face downloader
+        run: |
+          py -3 -m pip install --upgrade pip
+          py -3 -m pip install --upgrade huggingface_hub hf_transfer
+
+          hf --help | Out-Null
+
+      - name: Clone llama.cpp MTP branch
+        run: |
+          if (Test-Path "llama.cpp") {
+            Remove-Item -Recurse -Force "llama.cpp"
+          }
+
+          git clone `
+            --depth 1 `
+            --branch $env:LLAMA_BRANCH `
+            $env:LLAMA_REPO `
+            llama.cpp
+
+      - name: Configure llama.cpp CUDA build
+        run: |
+          cmake llama.cpp -B llama.cpp/build `
+            -DBUILD_SHARED_LIBS=OFF `
+            -DGGML_CUDA=ON
+
+      - name: Build llama-cli and llama-server
+        run: |
+          cmake --build llama.cpp/build `
+            --config Release `
+            -j 8 `
+            --clean-first `
+            --target llama-cli llama-server
+
+      - name: Locate llama-server executable
+        run: |
+          $server = Get-ChildItem `
+            -Path "llama.cpp/build" `
+            -Recurse `
+            -Filter "llama-server.exe" |
+            Select-Object -First 1
+
+          if (-not $server) {
+            throw "llama-server.exe was not found after build."
+          }
+
+          Write-Host "Found llama-server: $($server.FullName)"
+          "LLAMA_SERVER_EXE=$($server.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Download Qwen3.6 MTP GGUF
+        run: |
+          $repoSafe = $env:MODEL_REPO.Replace("/", "__")
+          $modelDir = Join-Path $env:GITHUB_WORKSPACE "models\$repoSafe"
+
+          New-Item -ItemType Directory -Force -Path $modelDir | Out-Null
+
+          hf download $env:MODEL_REPO `
+            --local-dir $modelDir `
+            --include "*$env:MODEL_QUANT*.gguf"
+
+          $model = Get-ChildItem `
+            -Path $modelDir `
+            -Recurse `
+            -Filter "*.gguf" |
+            Where-Object {
+              $_.Name -like "*$env:MODEL_QUANT*" -and
+              $_.Name -notlike "*mmproj*"
+            } |
+            Select-Object -First 1
+
+          if (-not $model) {
+            throw "No matching GGUF model was found for quant '$env:MODEL_QUANT'."
+          }
+
+          Write-Host "Using model: $($model.FullName)"
+          "MODEL_FILE=$($model.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Start llama-server with MTP
+        run: |
+          $args = @(
+            "--model", $env:MODEL_FILE,
+            "-ngl", "99",
+            "-c", $env:MODEL_CONTEXT,
+            "-fa", "on",
+            "-np", "1",
+            "--spec-type", "mtp",
+            "--spec-draft-n-max", "2",
+            "--host", "127.0.0.1",
+            "--port", $env:SERVER_PORT
+          )
+
+          if ($env:THINKING_MODE -eq "false") {
+            $args += @(
+              "--chat-template-kwargs",
+              '{"enable_thinking":false}'
+            )
+          }
+
+          Write-Host "Starting llama-server..."
+          Write-Host ($args -join " ")
+
+          $process = Start-Process `
+            -FilePath $env:LLAMA_SERVER_EXE `
+            -ArgumentList $args `
+            -PassThru `
+            -RedirectStandardOutput "llama-server.stdout.log" `
+            -RedirectStandardError "llama-server.stderr.log"
+
+          "LLAMA_SERVER_PID=$($process.Id)" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Wait until llama-server is healthy
+        run: |
+          $url = "http://127.0.0.1:$env:SERVER_PORT/health"
+          $deadline = (Get-Date).AddMinutes(60)
+
+          while ((Get-Date) -lt $deadline) {
+            try {
+              $response = Invoke-WebRequest `
+                -Uri $url `
+                -TimeoutSec 10 `
+                -UseBasicParsing
+
+              if ($response.StatusCode -eq 200) {
+                Write-Host "llama-server is healthy."
+                exit 0
+              }
+            }
+            catch {
+              Write-Host "Server not ready yet..."
+            }
+
+            Start-Sleep -Seconds 15
+          }
+
+          Write-Host "=== llama-server stdout ==="
+          if (Test-Path "llama-server.stdout.log") {
+            Get-Content "llama-server.stdout.log" -Tail 200
+          }
+
+          Write-Host "=== llama-server stderr ==="
+          if (Test-Path "llama-server.stderr.log") {
+            Get-Content "llama-server.stderr.log" -Tail 200
+          }
+
+          throw "llama-server did not become healthy in time."
+
+      - name: Smoke test chat completion
+        run: |
+          $body = @{
+            model = "qwen3.6-mtp"
+            messages = @(
+              @{
+                role = "user"
+                content = "Reply with exactly: MTP OK"
+              }
+            )
+            max_tokens = 16
+            temperature = 0.1
+          } | ConvertTo-Json -Depth 8
+
+          $response = Invoke-RestMethod `
+            -Uri "http://127.0.0.1:$env:SERVER_PORT/v1/chat/completions" `
+            -Method Post `
+            -ContentType "application/json" `
+            -Body $body
+
+          $text = $response.choices[0].message.content
+          Write-Host "Model reply:"
+          Write-Host $text
+
+      - name: Print server logs on failure
+        if: failure()
+        run: |
+          Write-Host "=== llama-server stdout ==="
+          if (Test-Path "llama-server.stdout.log") {
+            Get-Content "llama-server.stdout.log" -Tail 300
+          }
+
+          Write-Host "=== llama-server stderr ==="
+          if (Test-Path "llama-server.stderr.log") {
+            Get-Content "llama-server.stderr.log" -Tail 300
+          }
+
+      - name: Stop llama-server
+        if: always()
+        run: |
+          if ($env:LLAMA_SERVER_PID) {
+            Stop-Process -Id $env:LLAMA_SERVER_PID -Force -ErrorAction SilentlyContinue
+          }
