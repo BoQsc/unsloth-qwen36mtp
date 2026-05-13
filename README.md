@@ -1,3 +1,6 @@
+MTP lama-server-qwen36-mtp-windows-cuda inference for windows:    
+https://github.com/BoQsc/unsloth-qwen36mtp/actions/runs/25812304241/artifacts/6976383695
+
 
 Model download:   
 https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF
