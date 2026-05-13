@@ -1,4 +1,4 @@
-name: Build llama.cpp MTP Windows CUDA
+name: Build llama.cpp Qwen3.6 MTP Windows CUDA
 
 on:
   workflow_dispatch:
@@ -8,10 +8,10 @@ jobs:
     runs-on: windows-2022
 
     steps:
-      - name: Install CUDA 12.8.1
+      - name: Install CUDA 12.4.1
         uses: Jimver/cuda-toolkit@v0.2.35
         with:
-          cuda: '12.8.1'
+          cuda: '12.4.1'
           method: 'network'
           sub-packages: '["nvcc", "cudart", "cublas", "cublas_dev", "visual_studio_integration"]'
 
@@ -19,20 +19,23 @@ jobs:
         shell: pwsh
         run: |
           nvcc --version
+          Write-Host "CUDA_PATH=$env:CUDA_PATH"
 
-      - name: Clone llama.cpp MTP branch
+      - name: Clone MTP llama.cpp branch
         shell: pwsh
         run: |
           git clone --depth 1 --branch mtp-clean https://github.com/am17an/llama.cpp.git
 
-      - name: Configure CUDA build
+      - name: Configure build
         shell: pwsh
         run: |
           cmake llama.cpp -B llama.cpp/build `
             -DBUILD_SHARED_LIBS=OFF `
-            -DGGML_CUDA=ON
+            -DGGML_CUDA=ON `
+            -DLLAMA_BUILD_SERVER=ON `
+            -DLLAMA_BUILD_BORINGSSL=ON
 
-      - name: Build llama-server MTP binary
+      - name: Build llama-server
         shell: pwsh
         run: |
           cmake --build llama.cpp/build `
@@ -41,7 +44,7 @@ jobs:
             --target llama-server `
             -j 2
 
-      - name: Copy single executable
+      - name: Package executable and required CUDA DLLs
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path out | Out-Null
@@ -50,8 +53,15 @@ jobs:
             "llama.cpp/build/bin/Release/llama-server.exe" `
             "out/llama-server-qwen36-mtp-windows-cuda.exe"
 
-      - name: Upload single executable
+          Copy-Item "$env:CUDA_PATH\bin\cudart64_*.dll" "out/"
+          Copy-Item "$env:CUDA_PATH\bin\cublas64_*.dll" "out/"
+          Copy-Item "$env:CUDA_PATH\bin\cublasLt64_*.dll" "out/"
+
+          Write-Host "Packaged files:"
+          Get-ChildItem out | Select-Object Name, Length
+
+      - name: Upload portable Windows CUDA package
         uses: actions/upload-artifact@v7
         with:
-          path: out/llama-server-qwen36-mtp-windows-cuda.exe
-          archive: false
+          name: llama-server-qwen36-mtp-windows-cuda
+          path: out/
