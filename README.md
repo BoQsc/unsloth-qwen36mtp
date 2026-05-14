@@ -1,22 +1,22 @@
-MTP lama-server-qwen36-mtp-windows-cuda inference for windows:    
+#### MTP lama-server-qwen36-mtp-windows-cuda inference for windows:    
 https://github.com/BoQsc/unsloth-qwen36mtp/actions/runs/25812304241/artifacts/6976383695
 
 
-Model download:   
+#### Model download:   
 https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF
 
 
-llamaserver with ~23k context.   
+#### llamaserver with ~23k context.   
 
 ```
 .\llama-server-qwen36-mtp-windows-cuda.exe -m "C:\Users\Feder\.lmstudio\models\unsloth\Qwen3.6-27B-MTP-GGUF\Qwen3.6-27B-Q4_K_S.gguf" -ngl 99 -c 23768 -fa on -np 1 --spec-type draft-mtp --spec-draft-n-max 2
 ```
 
-Chat  
+#### Chat  
 http://127.0.0.1:8080
 
 
-Opencode support  
+#### Opencode support  
 
 `%USERPROFILE%\.config\opencode\opencode.jsonc`
 ```
