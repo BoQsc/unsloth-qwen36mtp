@@ -1,3 +1,5 @@
+# MTP Qwen 4.6 27M on GeForce RTX 4090
+
 #### MTP lama-server-qwen36-mtp-windows-cuda inference for windows:    
 https://github.com/BoQsc/unsloth-qwen36mtp/actions/runs/25812304241/artifacts/6976383695
 
