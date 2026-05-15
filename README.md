@@ -1,3 +1,5 @@
+> Latest news: https://www.reddit.com/r/unsloth/comments/1tdw5jq/qwen36_mtp_unsloth_ggufs_now_18x_faster/
+
 # MTP Qwen 4.6 27M on GeForce RTX 4090
 
 #### MTP lama-server-qwen36-mtp-windows-cuda inference for windows:     
