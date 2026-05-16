@@ -1,4 +1,4 @@
-> Latest news: https://www.reddit.com/r/unsloth/comments/1tdw5jq/qwen36_mtp_unsloth_ggufs_now_18x_faster/
+> Latest news: https://www.reddit.com/r/unsloth/comments/1tdw5jq/qwen36_mtp_unsloth_ggufs_now_18x_faster/  
 > Context memory https://github.com/ggml-org/llama.cpp/pull/22673#issuecomment-4465608286
 
 # MTP Qwen 4.6 27M on GeForce RTX 4090
