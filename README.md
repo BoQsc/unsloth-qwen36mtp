@@ -17,6 +17,8 @@ https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF
 .\llama-server-qwen36-mtp-windows-cuda.exe -m "C:\Users\Feder\.lmstudio\models\unsloth\Qwen3.6-27B-MTP-GGUF\Qwen3.6-27B-Q4_K_S.gguf" -ngl 99 -c 23768 -fa on -np 1 --spec-type draft-mtp --spec-draft-n-max 2
 ```
 
+latest: `llama-server.exe -m "C:\Users\Feder\.lmstudio\models\unsloth\Qwen3.6-27B-MTP-GGUF\Qwen3.6-27B-Q4_K_S.gguf" -ngl 99 -c 23768 -fa on -np 1 --spec-type draft-mtp --spec-draft-n-max 2 --spec-draft-p-min 0.75`
+
 #### Chat  
 http://127.0.0.1:8080
 
