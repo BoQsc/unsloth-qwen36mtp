@@ -45,3 +45,10 @@ http://127.0.0.1:8080
   }
 }
 ```
+
+
+Codex app installation directory on Windows:
+```
+PS C:\Users\Feder> (Get-AppxPackage OpenAI.Codex).InstallLocation
+C:\Program Files\WindowsApps\OpenAI.Codex_26.513.3673.0_x64__2p2nqsd0c76g0
+```
