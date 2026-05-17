@@ -71,3 +71,12 @@ wire_api = "responses"
 
 
 ```
+
+This probably works only for cli
+
+```
+[profiles.qwen3.6-27b-mtp]
+model_provider = "llamacpp"
+model = "qwen3.6-27b-mtp"
+context_length = 31768
+```
