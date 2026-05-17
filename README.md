@@ -458,3 +458,7 @@ def main() -> int:
 if __name__ == "__main__":
     raise SystemExit(main())
 ```
+
+
+# Latest codex research with tool use  
+https://chatgpt.com/c/6a08c0f9-2b20-8393-ae0a-fa644ec6337a  
