@@ -55,7 +55,10 @@ C:\Program Files\WindowsApps\OpenAI.Codex_26.513.3673.0_x64__2p2nqsd0c76g0
 
 Codex support for local
 ```
-C:\Users\%USERNAME%\.codex
+C:\Users\%USERNAME%\.codex\config.toml
+```
+
+
 ```
 model = "qwen3.6-27b-mtp"
 model_provider = "llamacpp"
@@ -65,6 +68,6 @@ model_context_window = 8192
 name = "llama.cpp local"
 base_url = "http://127.0.0.1:8080/v1"
 wire_api = "responses"
-```
+
 
 ```
