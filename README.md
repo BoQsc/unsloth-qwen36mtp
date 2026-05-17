@@ -1,7 +1,8 @@
-> Latest news: https://www.reddit.com/r/unsloth/comments/1tdw5jq/qwen36_mtp_unsloth_ggufs_now_18x_faster/  
-> Context memory https://github.com/ggml-org/llama.cpp/pull/22673#issuecomment-4465608286
-> Goals in codex activation: https://chatgpt.com/c/6a09bacd-732c-8386-9f93-16dba6e9251e
+> Latest news: https://www.reddit.com/r/unsloth/comments/1tdw5jq/qwen36_mtp_unsloth_ggufs_now_18x_faster/    
+> Context memory https://github.com/ggml-org/llama.cpp/pull/22673#issuecomment-4465608286  
+> Goals in codex activation: https://chatgpt.com/c/6a09bacd-732c-8386-9f93-16dba6e9251e  
 > Tools also should be activated in the llama server in command line if not using Codex.
+
 # MTP Qwen 4.6 27M on GeForce RTX 4090
 
 #### MTP lama-server-qwen36-mtp-windows-cuda inference for windows:     
