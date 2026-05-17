@@ -82,6 +82,12 @@ context_length = 31768
 ```
 
 Launcher of qwen for codex
+Server:
+```
+llama-server.exe -m "C:\Users\Feder\.lmstudio\models\unsloth\Qwen3.6-27B-MTP-GGUF\Qwen3.6-27B-Q4_K_S.gguf" -ngl 99 -c 31768 -fa on -np 1 --spec-type draft-mtp --spec-draft-n-max 2 --spec-draft-p-min 0.75  --alias qwen3.6-27b-mtp
+```
+
+Client: 
 ```
 import json
 import re
